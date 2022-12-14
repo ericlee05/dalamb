@@ -1,0 +1,6 @@
+rootProject.name = 'dalamb'
+
+include 'dalamb-api'
+include 'dalamb-engine'
+include 'dalamb-example'
+

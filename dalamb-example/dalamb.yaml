@@ -1,0 +1,9 @@
+services:
+  - package: com.example.dalamb
+    name: example
+    jar: dalamb-example/build/libs/dalamb-example-1.0-SNAPSHOT.jar
+
+bindings:
+  - path: /
+    methods: [ GET, POST, PATCH ]
+    action: example.helloWorld.hello

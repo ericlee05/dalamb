@@ -1,0 +1,13 @@
+plugins {
+    id 'java'
+    id 'idea'
+}
+
+allprojects {
+    group 'org.ericlee.dalamb'
+    version '1.0-SNAPSHOT'
+}
+
+repositories {
+    mavenCentral()
+}
