@@ -19,7 +19,9 @@ public class Dalamb {
 
         Undertow server = Undertow.builder()
                 .addHttpListener(8080, "127.0.0.1")
-                .setHandler(new DalambHandler(configuration))
+                .setHandler((exchange) -> {
+                    exchange.getRequestReceiver().receiveFullBytes(new DalambHandler(configuration));
+                })
                 .build();
 
         server.start();

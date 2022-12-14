@@ -1,14 +1,20 @@
 package org.ericlee.dalamb.engine.listener;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import io.undertow.server.HttpHandler;
+import io.undertow.io.Receiver;
 import io.undertow.server.HttpServerExchange;
 import io.undertow.util.Headers;
 import org.ericlee.dalamb.engine.configuration.ConfigurationFormat;
 import org.ericlee.dalamb.engine.core.action.ActionManager;
+import org.ericlee.dalamb.engine.core.action.ParameterInjector;
 import org.ericlee.dalamb.engine.listener.http.HttpException;
 
-public class DalambHandler implements HttpHandler {
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.ericlee.dalamb.engine.core.action.ParameterInjector.getBodyType;
+
+public class DalambHandler implements Receiver.FullBytesCallback {
     private final ConfigurationFormat configuration;
     private final ActionManager actionManager;
     private final RequestMapper requestMapper;
@@ -20,21 +26,39 @@ public class DalambHandler implements HttpHandler {
     }
 
     @Override
-    public void handleRequest(HttpServerExchange exchange) {
+    public void handle(HttpServerExchange exchange, byte[] message) {
         try {
             RequestMapper.ActionAndParamEntry entry = requestMapper.getMappedAction(exchange.getRequestMethod().toString(),
                     exchange.getRequestPath());
 
             if (entry == null) throw new HttpException(404, "Page not found :(");
 
-            // query parser here
+            // query parser
+            Map<String, String> queryParams = new HashMap<>();
+            String[] queryTokens = exchange.getQueryString().split("&");
+            for(String queryToken : queryTokens) {
+                String[] tokens = queryToken.split("=");
+                queryParams.put(tokens[0], tokens.length == 2 ? tokens[1] : "");
+            }
 
-            // body parser here
+            // body parser
+            Class<?> bodyType = getBodyType(entry.getAction());
+            Object body = null;
+            if(bodyType != null) {
+                try {
+                    body = objectMapper.readValue(message, bodyType);
+                } catch (Exception exception) {
+                    throw new HttpException(400, "Bad request");
+                }
+            }
 
-            System.out.printf("Qualified action found:\n * method: %s\n * parameters: %s\n", entry.getAction(), entry.getParams());
+            System.out.printf("Qualified action found:\n * method: %s\n * path variables: %s\n", entry.getAction(), entry.getPathVariable());
+
+            Object response = new ParameterInjector(entry.getRuntimeInstance(), entry.getAction(),
+                    entry.getPathVariable(), queryParams, body).execute();
 
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "application/json");
-            exchange.getResponseSender().send(objectMapper.writeValueAsString(entry.getAction().invoke(entry.getRuntimeInstance())));
+            exchange.getResponseSender().send(objectMapper.writeValueAsString(response));
         } catch (HttpException exception) {
             exchange.getResponseHeaders().put(Headers.CONTENT_TYPE, "text/plain");
             exchange.setStatusCode(exception.getStatus());

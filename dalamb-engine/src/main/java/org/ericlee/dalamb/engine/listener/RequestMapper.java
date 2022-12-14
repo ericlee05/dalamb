@@ -29,7 +29,7 @@ public class RequestMapper {
     public static class ActionAndParamEntry {
         private Object runtimeInstance;
         private Method action;
-        private Map<String, String> params;
+        private Map<String, String> pathVariable;
     }
 
     public ActionAndParamEntry getMappedAction(String method, String requestPath) {
