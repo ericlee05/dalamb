@@ -11,17 +11,16 @@ public class Dalamb {
     public static void main(String[] args) {
         ConfigurationFormat configuration;
         try {
-            configuration = ConfigurationFormat.from(new File("./dalamb-example/dalamb.yaml"));
+            configuration = ConfigurationFormat.from(new File(args[0]));
         } catch (IOException exception) {
             System.out.println("Configuration file not found.");
             return;
         }
 
         Undertow server = Undertow.builder()
-                .addHttpListener(8080, "127.0.0.1")
-                .setHandler((exchange) -> {
-                    exchange.getRequestReceiver().receiveFullBytes(new DalambHandler(configuration));
-                })
+                .addHttpListener(Integer.parseInt(args[1]), "127.0.0.1")
+                .setHandler((exchange) ->
+                        exchange.getRequestReceiver().receiveFullBytes(new DalambHandler(configuration)))
                 .build();
 
         server.start();
