@@ -15,14 +15,11 @@ import java.util.Map;
 import static org.ericlee.dalamb.engine.core.action.ParameterInjector.getBodyType;
 
 public class DalambHandler implements Receiver.FullBytesCallback {
-    private final ConfigurationFormat configuration;
-    private final ActionManager actionManager;
     private final RequestMapper requestMapper;
     private final ObjectMapper objectMapper = new ObjectMapper();
     public DalambHandler(ConfigurationFormat configuration) {
-        this.configuration = configuration;
-        this.actionManager = new ActionManager(configuration);
-        this.requestMapper = new RequestMapper(actionManager, configuration.getBindings());
+        this.requestMapper = new RequestMapper(new ActionManager(configuration),
+                configuration.getBindings());
     }
 
     @Override

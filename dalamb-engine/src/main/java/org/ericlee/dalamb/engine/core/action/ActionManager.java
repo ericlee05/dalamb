@@ -11,53 +11,57 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class ActionManager {
-    private final ConcurrentHashMap<String, Method> actions = new ConcurrentHashMap<String, Method>();
-    private final Map<String, List<Class<?>>> classes = new HashMap<String, List<Class<?>>>();
+    private final ConcurrentHashMap<String, Method> actions = new ConcurrentHashMap<>();
+    private final Map<String, List<Class<?>>> classes = new HashMap<>();
     private final Map<String, Object> instances = new HashMap<>();
 
     public ActionManager(ConfigurationFormat configuration) {
         for(ServiceConfiguration service : configuration.getServices()) {
             try {
                 classes.put(service.getName(), List.of(new JarClassLoader(service.getJar()).getClasses()));
-            } catch (Exception exception) {}
+            } catch (Exception ignored) {}
         }
 
         System.out.printf("Loaded %,d services: ", classes.size());
         System.out.println(classes);
     }
 
-    public Object getQualifiedInstance(String actionIdentifier) {
+    public Optional<Object> getQualifiedInstance(String actionIdentifier) {
         String[] tokens = actionIdentifier.split("\\.");
         String serviceName = tokens[0];
         String topicName = tokens[1];
 
         String instanceId = String.format("%s.%s", serviceName, topicName);
-        if(instances.containsKey(instanceId)) return instances.get(instanceId);
+        if (instances.containsKey(instanceId))
+            return Optional.of(instances.get(instanceId));
 
         try {
-            Object instance = classes.get(serviceName).stream().filter(it -> it.isAnnotationPresent(Topic.class) &&
+            Object instance = classes.get(serviceName).stream().filter(it ->
+                            it.isAnnotationPresent(Topic.class) &&
                             topicName.equals(it.getAnnotation(Topic.class).value()))
                     .findFirst()
-                    .orElse(null)
+                    .orElseThrow()
                     .newInstance();
 
             instances.put(instanceId, instance);
-            return instance;
+            return Optional.of(instance);
         } catch (Exception exception) {
-            return null;
+            return Optional.empty();
         }
     }
 
-    public Method getAction(String actionIdentifier) {
-        if(actions.containsKey(actionIdentifier)) return actions.get(actionIdentifier);
+    public Optional<Method> getAction(String actionIdentifier) {
+        if(actions.containsKey(actionIdentifier))
+            return Optional.of(actions.get(actionIdentifier));
 
         String[] tokens = actionIdentifier.split("\\.");
         String service = tokens[0];
         String topic = tokens[1];
         String action = tokens[2];
+        Optional<Method> actionMethod = Optional.empty();
 
-        for(Class clazz : classes.get(service)) {
-            Topic topicAnnotation = (Topic)clazz.getAnnotation(Topic.class);
+        for(Class<?> clazz : classes.get(service)) {
+            Topic topicAnnotation = clazz.getAnnotation(Topic.class);
             if(topicAnnotation == null) continue;
 
             if(topic.equals(topicAnnotation.value())) {
@@ -66,10 +70,10 @@ public class ActionManager {
                         .orElse(null);
                 if(method != null) actions.put(actionIdentifier, method);
 
-                return method;
+                actionMethod = Optional.ofNullable(method);
             }
         }
 
-        return null;
+        return actionMethod;
     }
 }

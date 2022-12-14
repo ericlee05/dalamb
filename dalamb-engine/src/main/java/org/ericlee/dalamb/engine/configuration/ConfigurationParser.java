@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.IOException;
 
 class ConfigurationParser {
-    private static ObjectMapper yamlParser = new ObjectMapper(new YAMLFactory());
+    private static final ObjectMapper yamlParser = new ObjectMapper(new YAMLFactory());
 
     static ConfigurationFormat parseFrom(File file) throws IOException {
         return yamlParser.readValue(file, ConfigurationFormat.class);

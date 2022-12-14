@@ -24,10 +24,10 @@ public class ParameterInjector {
 
     private static ParameterType getSupportedTypeOf(Parameter param) {
         Annotation[] annotations = param.getAnnotations();
-        for(int i = 0; i < annotations.length; i++) {
-            if(QueryParameter.class.equals(annotations[i].annotationType())) return ParameterType.QUERY_PARAMETER;
-            else if(PathVariable.class.equals(annotations[i].annotationType())) return ParameterType.PATH_VARIABLE;
-            else if(Body.class.equals(annotations[i].annotationType())) return ParameterType.BODY;
+        for (Annotation annotation : annotations) {
+            if (QueryParameter.class.equals(annotation.annotationType())) return ParameterType.QUERY_PARAMETER;
+            else if (PathVariable.class.equals(annotation.annotationType())) return ParameterType.PATH_VARIABLE;
+            else if (Body.class.equals(annotation.annotationType())) return ParameterType.BODY;
         }
 
         return null;
@@ -35,12 +35,12 @@ public class ParameterInjector {
 
     private String getValueOfAnnotation(ParameterType type, Parameter param) {
         Annotation[] annotations = param.getAnnotations();
-        for(int i = 0; i < annotations.length; i++) {
-            if(type == ParameterType.QUERY_PARAMETER && QueryParameter.class.equals(annotations[i].annotationType()))
-                return ((QueryParameter)annotations[i]).value();
+        for (Annotation annotation : annotations) {
+            if (type == ParameterType.QUERY_PARAMETER && QueryParameter.class.equals(annotation.annotationType()))
+                return ((QueryParameter) annotation).value();
 
-            if(type == ParameterType.PATH_VARIABLE && PathVariable.class.equals(annotations[i].annotationType()))
-                return ((PathVariable)annotations[i]).value();
+            if (type == ParameterType.PATH_VARIABLE && PathVariable.class.equals(annotation.annotationType()))
+                return ((PathVariable) annotation).value();
         }
 
         return null;
@@ -49,9 +49,9 @@ public class ParameterInjector {
     public static Class<?> getBodyType(Method method) {
         Parameter[] parameters = method.getParameters();
 
-        for(int i = 0; i < parameters.length; i++) {
-            if(getSupportedTypeOf(parameters[i]) == ParameterType.BODY)
-                return parameters[i].getType();
+        for (Parameter parameter : parameters) {
+            if (getSupportedTypeOf(parameter) == ParameterType.BODY)
+                return parameter.getType();
         }
 
         return null;

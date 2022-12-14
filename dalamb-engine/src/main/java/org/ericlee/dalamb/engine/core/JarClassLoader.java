@@ -8,27 +8,28 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class JarClassLoader extends ClassLoader {
-    private final List<Class> classes = new ArrayList<>();
+    private final List<Class<?>> classes = new ArrayList<>();
 
     public JarClassLoader(String jarPath) throws IOException {
-        ZipFile jar = new ZipFile(jarPath);
-        Enumeration<? extends ZipEntry> entries = jar.entries();
+        try (final ZipFile jar = new ZipFile(jarPath)) {
+            Enumeration<? extends ZipEntry> entries = jar.entries();
 
-        while (entries.hasMoreElements()) {
-            ZipEntry entry = entries.nextElement();
-            if(!entry.isDirectory() && entry.getName().endsWith(".class")) {
-                byte[] classFile = new byte[(int)entry.getSize()];
-                jar.getInputStream(entry).read(classFile, 0, (int)entry.getSize());
+            while (entries.hasMoreElements()) {
+                ZipEntry entry = entries.nextElement();
+                if(!entry.isDirectory() && entry.getName().endsWith(".class")) {
+                    byte[] classFile = new byte[(int)entry.getSize()];
+                    jar.getInputStream(entry).read(classFile, 0, (int)entry.getSize());
 
-                String className = entry.getName()
-                        .replace(".class", "")
-                        .replace("/", ".");
-                classes.add(defineClass(className, classFile, 0, classFile.length));
+                    String className = entry.getName()
+                            .replace(".class", "")
+                            .replace("/", ".");
+                    classes.add(defineClass(className, classFile, 0, classFile.length));
+                }
             }
         }
     }
 
-    public Class[] getClasses() {
+    public Class<?>[] getClasses() {
         return this.classes.toArray(new Class[0]);
     }
 }

@@ -13,14 +13,14 @@ import java.util.List;
 import java.util.Map;
 
 public class RequestMapper {
-    private ActionManager manager;
-    private List<RequestPathPattern> bindings = new ArrayList<>();
+    private final ActionManager manager;
+    private final List<RequestPathPattern> bindings = new ArrayList<>();
 
     public RequestMapper(ActionManager manager, List<BindingConfiguration> bindingConfiguration) {
         this.manager = manager;
-        bindingConfiguration.forEach((binding) -> {
-            bindings.add(new RequestPathPattern(binding.getPath(), binding));
-        });
+        bindingConfiguration.forEach((binding) ->
+            bindings.add(new RequestPathPattern(binding.getPath(), binding))
+        );
     }
 
     @ToString
@@ -34,14 +34,18 @@ public class RequestMapper {
 
     public ActionAndParamEntry getMappedAction(String method, String requestPath) {
         RequestPathPattern found = bindings.stream().filter(it -> it.matches(requestPath) &&
-                it.getConfiguration().getMethods().contains(method))
+                        it.getConfiguration().getMethods().contains(method))
                 .findFirst()
                 .orElse(null);
-        if(found == null) return null;
+        if (found == null) return null;
+
+        Object instance = manager.getQualifiedInstance(found.getConfiguration().getAction())
+                .orElseThrow();
+        Method action = manager.getAction(found.getConfiguration().getAction())
+                .orElseThrow();
 
         return new ActionAndParamEntry(
-                manager.getQualifiedInstance(found.getConfiguration().getAction()),
-                manager.getAction(found.getConfiguration().getAction()),
-                found.getPathVariables(requestPath));
+                instance, action, found.getPathVariables(requestPath)
+        );
     }
 }

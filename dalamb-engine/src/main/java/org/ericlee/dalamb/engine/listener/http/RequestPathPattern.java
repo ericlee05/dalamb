@@ -1,6 +1,5 @@
 package org.ericlee.dalamb.engine.listener.http;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.ericlee.dalamb.engine.configuration.element.BindingConfiguration;
 
@@ -10,11 +9,11 @@ import java.util.Map;
 
 public class RequestPathPattern {
     @Getter
-    private BindingConfiguration configuration;
-    private String[] patternTokens;
+    private final BindingConfiguration configuration;
+    private final String[] patternTokens;
 
     private boolean isVariableSegment(String patternSegment) {
-        return patternSegment.matches("\\{[a-z]([a-z]|[0-9]|_|-)*\\}");
+        return patternSegment.matches("\\{[a-z]([a-z]|[0-9]|_|-)*\\\\}");
     }
 
     private boolean segmentEquals(String patternSegment, String pathSegment) {
